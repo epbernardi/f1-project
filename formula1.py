@@ -47,7 +47,6 @@ with sync_playwright() as playwright:
 
 
 
-
 # Get the drivers data
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=True)

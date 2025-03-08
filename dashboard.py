@@ -6,7 +6,7 @@ import plotly.express as px
 st.set_page_config(layout="wide")
 
 # Creating a sidebar
-menu = st.sidebar.radio("Escolha uma página", ["Seasons 🏁", "Rankings 📊", "Interactions 📈"])
+menu = st.sidebar.radio("Select the page", ["Seasons 🏁", "Rankings 📊", "Interactions 📈"])
 
 # Applying global CSS for black background, minha height and white text
 st.markdown(
@@ -116,15 +116,15 @@ if menu == "Seasons 🏁":
     with col4:
         st.metric(label="Driver with the most fastest laps", value=driver_most_fastestlaps, delta=f"{qt_fastest_laps} fastest laps")
 
-# Página de Outro Projeto
+# Rankings page
 elif menu == "Rankings 📊":
     st.title("Rankings 📊")
     st.write("Rankings of F1 history")
 
-     # Criando colunas para os rankings
+     # Creating columns for the rankings
     col1, col2, col3 = st.columns([3, 3, 3])
 
-    # Piloto que mais venceu corridas
+    # Driver with most wins
     with col1:
         st.subheader("Most Winning Drivers 🏆")
         if "Winner" in df_races.columns:
@@ -134,7 +134,7 @@ elif menu == "Rankings 📊":
         else:
             st.write("Data not available")
 
-    # Corridas mais disputadas
+    # Most Held Races
     with col2:
         st.subheader("Most Held Races 🏁")
         if "Grand Prix" in df_races.columns:
@@ -144,7 +144,7 @@ elif menu == "Rankings 📊":
         else:
             st.write("Data not available")
 
-    # Pilotos com mais voltas rápidas
+    # Drivers with more fastest laps
     with col3:
         st.subheader("Fastest Lap Masters ⚡")
         if "Driver" in df_fastest_laps.columns:
@@ -154,10 +154,10 @@ elif menu == "Rankings 📊":
         else:
             st.write("Data not available")
 
-    # Criando nova linha de rankings
+    # Creating new columns for the ranks
     col4, col5 = st.columns([3, 3])
 
-     # Piloto que mais pontuou
+     # Driver with most points
     with col4:
         st.subheader("Drivers with Most Points 🎯")
         if "Driver" in df_drivers.columns and "Pts" in df_drivers.columns:
@@ -167,27 +167,27 @@ elif menu == "Rankings 📊":
         else:
             st.write("Data not available")
 
-    # Tempo total de corrida por pista (com média de tempo por corrida)
+    # Total race time by track (average of time per race)
     with col5:
         st.subheader("Total Race Time by Track ⏱️")
     
         if "Grand Prix" in df_races.columns and "Time" in df_races.columns:
-            # Converter a coluna "Time" para segundos
+            # Convert Time column to seconds
             df_races["Time_seconds"] = pd.to_timedelta(df_races["Time"], errors='coerce').dt.total_seconds()
 
-            # Remover valores nulos que podem causar erro na agregação
+            # Remove NA values
             df_races = df_races.dropna(subset=["Time_seconds"])
 
-            # Agrupar por "Grand Prix" e calcular o tempo total e a quantidade de corridas
+            # Group by "Grand Prix" and calculate total time of races and the quantity of each one
             df_total_time = df_races.groupby("Grand Prix").agg(
                 Total_Time=("Time_seconds", "sum"),
                 Races_Competed=("Grand Prix", "count")  # Quantidade de vezes que a pista foi usada
             ).reset_index()
 
-            # Calcular a média de tempo por corrida
+            # Calculate the average time of race
             df_total_time["Avg_Time_per_Race"] = df_total_time["Total_Time"] / df_total_time["Races_Competed"]
 
-            # Converter para formato legível de horas:minutos:segundos
+            # Convert to the format hours:minutes:seconds
             df_total_time["Total Time"] = df_total_time["Total_Time"].apply(
                 lambda x: f"{int(x // 3600):02}:{int((x % 3600) // 60):02}:{int(x % 60):02}"
             )
@@ -195,10 +195,10 @@ elif menu == "Rankings 📊":
                 lambda x: f"{int(x // 3600):02}:{int((x % 3600) // 60):02}:{int(x % 60):02}"
             )
 
-            # Ordenar pelo tempo total de forma decrescente
+            # Order by total time (Descending)
             df_total_time = df_total_time.sort_values(by="Total_Time", ascending=False)
 
-            # Exibir no Streamlit apenas as colunas formatadas
+            # Show on streamlit only the formated ones
             st.dataframe(df_total_time[["Grand Prix", "Total Time", "Avg Time per Race"]],
                      use_container_width=True, hide_index=True, height=450)
         else:
@@ -209,21 +209,21 @@ elif menu == "Interactions 📈":
     st.title("Interactions 📈")
     st.write("Explore a little of F1 history interactively.")
 
-    # Verificando se as colunas necessárias existem
+    # Verifying with the needed columns realy exists
     if all(col in df_races.columns for col in ["Grand Prix", "Winner", "Year", "Time"]):
-        # Criando lista de GPs ordenados alfabeticamente
+        # Creating the GPs list
         gp_sorted = sorted(df_races["Grand Prix"].unique())
         selected_gp = st.selectbox("Select a Grand Prix", gp_sorted)
 
-        # Filtrando apenas as corridas desse GP
+        # Filtering by GP
         df_gp = df_races[df_races["Grand Prix"] == selected_gp]
 
-        # Contando quantas vezes cada piloto venceu esse GP
+        # Counting how many races the driver has won
         df_gp_wins = df_gp["Winner"].value_counts().reset_index()
         df_gp_wins.columns = ["Driver", "Wins"]
-        df_gp_wins = df_gp_wins.sort_values(by="Wins", ascending=True)  # Ordenação crescente no gráfico
+        df_gp_wins = df_gp_wins.sort_values(by="Wins", ascending=True)  # Ascending order
 
-        # Criando gráfico de vitórias por piloto no GP selecionado
+        # Creating a graph by pilot by GP
         fig_gp_wins = px.bar(
             df_gp_wins,
             x="Wins",
@@ -238,39 +238,39 @@ elif menu == "Interactions 📈":
 
         st.plotly_chart(fig_gp_wins, use_container_width=True)
 
-        # Criando lista de pilotos ordenados alfabeticamente
+        # Creating a list of the drivers
         drivers_sorted = sorted(df_gp_wins["Driver"].unique())
         selected_driver = st.selectbox("Select a Driver", drivers_sorted)
 
-        # Filtrando os anos em que o piloto venceu nesse GP
+        # Filtering the years that the selected driver won
         df_driver_gp = df_gp[df_gp["Winner"] == selected_driver][["Grand Prix", "Year", "Winner"]]
-        df_driver_gp["Year"] = df_driver_gp["Year"].astype(str)  # Garantindo que o ano fique no formato correto
+        df_driver_gp["Year"] = df_driver_gp["Year"].astype(str)  # Adjusting the Year format
 
-        # Obtendo a volta mais rápida nos anos das vitórias do piloto
+        # Looking for the fastest lap on the years that the driver won
         if "Grand Prix" in df_races.columns and "Year" in df_races.columns:
-            # Mesclar df_races com df_fastest_laps para obter a volta mais rápida correta
+            # Merge df_races with df_fastest_laps to get the right fastest lap
             df_fastest_lap = df_fastest_laps[["Grand Prix", "Year", "Driver", "Time"]]
-            df_fastest_lap["Year"] = df_fastest_lap["Year"].astype(str)  # Garantindo formato de string
+            df_fastest_lap["Year"] = df_fastest_lap["Year"].astype(str)  # String format
 
-            # Juntando as informações para exibir o desempenho do piloto vencedor e a volta mais rápida
+            # Merging information to get the winner performance and the fastest lap
             df_result = df_driver_gp.merge(df_fastest_lap, on=["Grand Prix", "Year"], how="left")
-            df_result = df_result.rename(columns={"Driver": "Fastest Lap Driver"})  # Renomeando a coluna
-            df_result = df_result.rename(columns={"Time": "Fastest Lap Time"})  # Renomeando a coluna
+            df_result = df_result.rename(columns={"Driver": "Fastest Lap Driver"})  # Renaming the column
+            df_result = df_result.rename(columns={"Time": "Fastest Lap Time"})  # Renaming the column
             df_result = df_result.sort_values(by="Year", ascending=True)
 
-            # Exibir a tabela corrigida com a volta mais rápida correta
+            # Right table with the correct fastest lap
             st.subheader(f"Performances during {selected_driver} wins in {selected_gp}")
             st.dataframe(df_result, use_container_width=True, hide_index=True, height=200)
 
-        # Ranking das 5 voltas mais rápidas já feitas nesse GP
+        # Ranking of the 5 fastest laps at the GP
         if "Time" in df_fastest_laps.columns:
             df_fastest_overall = df_fastest_laps[df_fastest_laps["Grand Prix"] == selected_gp][["Year", "Driver", "Time"]].copy()
-            df_fastest_overall["Year"] = df_fastest_overall["Year"].astype(str)  # Ajustando formato do ano
-            df_fastest_overall = df_fastest_overall.sort_values(by="Time", ascending=True).head(5)  # 5 melhores tempos
+            df_fastest_overall["Year"] = df_fastest_overall["Year"].astype(str)  # Adjusting Years format
+            df_fastest_overall = df_fastest_overall.sort_values(by="Time", ascending=True).head(5)  # 5 best times
 
-            # Exibir o ranking das voltas mais rápidas em formato de tabela
+            # Tabel of fastest laps ranking
             st.subheader(f"Top 5 Fastest Laps in {selected_gp}")
-            st.dataframe(df_fastest_overall, use_container_width=True, hide_index=True, height=200)  # Altura fixa para scroll
+            st.dataframe(df_fastest_overall, use_container_width=True, hide_index=True, height=200)  # AFixed Height to scroll
 
     else:
         st.write("Data not available. Ensure the dataset has 'Grand Prix', 'Winner', 'Year', and 'Time' columns.")
