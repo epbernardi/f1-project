@@ -268,7 +268,7 @@ elif menu == "Interactions 📈":
             df_fastest_overall["Year"] = df_fastest_overall["Year"].astype(str)  # Adjusting Years format
             df_fastest_overall = df_fastest_overall.sort_values(by="Time", ascending=True).head(5)  # 5 best times
 
-            # Tabel of fastest laps ranking
+            # Table of fastest laps ranking
             st.subheader(f"Top 5 Fastest Laps in {selected_gp}")
             st.dataframe(df_fastest_overall, use_container_width=True, hide_index=True, height=200)  # AFixed Height to scroll
 
